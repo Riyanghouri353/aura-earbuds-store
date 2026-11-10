@@ -1,6 +1,5 @@
 "use client";
-import { Suspense, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { PRODUCTS } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 
@@ -22,14 +21,19 @@ const BANDS = [
   { key: "20000-999999", label: "Rs 20,000+" },
 ];
 
-function ShopInner() {
-  const sp = useSearchParams();
-  const initUse = sp.get("use") || "";
-  const initBand = sp.get("max") ? `0-${sp.get("max")}` : sp.get("min") ? `${sp.get("min")}-999999` : "";
-  const [use, setUse] = useState(initUse);
-  const [band, setBand] = useState(initBand);
+export default function ShopPage() {
+  const [use, setUse] = useState("");
+  const [band, setBand] = useState("");
   const [sort, setSort] = useState("popular");
   const [query, setQuery] = useState("");
+
+  // Read ?use= / ?max= / ?min= after mount so the page server-renders the full grid.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("use")) setUse(sp.get("use"));
+    if (sp.get("max")) setBand(`0-${sp.get("max")}`);
+    else if (sp.get("min")) setBand(`${sp.get("min")}-999999`);
+  }, []);
 
   const list = useMemo(() => {
     let out = PRODUCTS.filter((p) => {
@@ -81,8 +85,4 @@ function ShopInner() {
       )}
     </div>
   );
-}
-
-export default function ShopPage() {
-  return <Suspense fallback={<div className="wrap" style={{ padding: 60 }}>Loading…</div>}><ShopInner /></Suspense>;
 }
